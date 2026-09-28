@@ -1,88 +1,87 @@
-# Platform Refactoring Assessment
+# Оценка рефакторинга платформы
 
-> **Time limit:** 90 minutes
+> **Лимит времени:** 90 минут
 
-> **Rules:** LLM and AI tool usage is permitted. All existing tests (unit and E2E) must pass when you're done.
+> **Правила:** Разрешается использование LLM и инструментов искусственного интеллекта. По завершении работы все существующие тесты (модульные и E2E) должны пройти успешно.
 
-> **Scope:** You may modify any file in the repository.
-
----
-
-## General Notes
-
-- **Read the codebase end-to-end before starting.** Understand the architecture, the data flow from client through API to database, the build system, the test infrastructure, and the conventions in use. Your solutions will be evaluated on whether they demonstrate genuine understanding of the system.
-- You are not told what technology to use or how to implement your solutions. You must audit, diagnose, and decide. Each task gives a direction and a definition of done.
-- Every change requires tests to pass and a brief written justification (inline comments or a separate markdown file).
-- Fix as many of the underlying issues as possible, in the process feel free to refactor the system to make it more maintainable while following best practices. As a guideline, prefer minimal, surgical changes over sweeping refactors. Fix the problem, not the neighborhood.
-- The order in which you tackle the issues, does not matter.
+> **Объем работ:** Вы можете изменять любой файл в репозитории.
 
 ---
 
-## Issue 1: The Credential Problem
+## Общие замечания
 
-This system stores user credentials and establishes trust between the client and the API. There are critical vulnerabilities in both. With millions of user accounts — credential security is non-negotiable.
-
-**Expectations:**
-- Identify and document the credential storage vulnerability: what it is, how it could be exploited, and how severe it is
-- Fix it with a backwards-compatible migration strategy. Existing seeded users must still be able to log in after your fix — you don't have their plaintext passwords, so think carefully about how to migrate incrementally.
-- Identify and document the trust establishment problem between client and API. Fix it
-- Write tests that prove each vulnerability existed and is now resolved
+- **Перед началом работы внимательно изучите исходный код от начала до конца.** Поймите архитектуру, поток данных от клиента через API к базе данных, систему сборки, тестовую инфраструктуру и используемые конвенции. Ваши решения будут оцениваться по тому, демонстрируют ли они подлинное понимание системы.
+- Вам не указывают, какие технологии использовать или как реализовывать ваши решения. Вы должны провести аудит, поставить диагноз и принять решение. Каждая задача содержит указание направления работы и определение критериев завершения.
+- Каждое изменение должно пройти тестирование и сопровождаться кратким письменным обоснованием (в виде комментариев в коде или отдельного файла в формате Markdown).
+- Исправьте как можно больше коренных проблем; в процессе не стесняйтесь рефакторить систему, чтобы сделать её более удобной в обслуживании, следуя при этом лучшим практикам. В качестве ориентира отдавайте предпочтение минимальным, точечным изменениям, а не радикальному рефакторингу. Исправляйте проблему, а не всё вокруг.
+- Порядок, в котором вы будете решать проблемы, не имеет значения.
 
 ---
 
-## Issue 2: The Query Performance Problem
+## Проблема № 1: Проблема с учетными данными
 
-Multiple services in the API have a systemic query performance issue. At scale, this pattern would bring down the database. This task is about the application layer, not database tuning.
+Эта система хранит учетные данные пользователей и устанавливает доверие между клиентом и API. В обоих случаях имеются критические уязвимости. Учитывая миллионы учетных записей пользователей, безопасность учетных данных не подлежит обсуждению.
 
-**Expectations:**
-- Profile these operations and document the exact number of SQL queries each executes: loading the home feed (10 posts), loading a user profile page, loading the bookmarks page (10 bookmarked posts)
-- Identify the anti-pattern causing unnecessary database load. Fix the worst offenders
-- Your refactored code must return identical API responses — no regressions
-- Document before/after query counts
-- Establish a reusable pattern or utility that prevents future developers from reintroducing the problem
+**Ожидания:**
+- Выявите и задокументируйте уязвимость хранилища учетных данных: в чём она заключается, как её можно использовать и насколько она серьезна
+- Устраните её с помощью стратегии миграции, обеспечивающей обратную совместимость. Существующие пользователи должны по-прежнему иметь возможность входить в систему после исправления — у вас нет их паролей в открытом виде, поэтому тщательно продумайте, как провести поэтапную миграцию.
+- Выявите и задокументируйте проблему установления доверия между клиентом и API. Устраните её
+- Напишите тесты, подтверждающие, что каждая уязвимость существовала и теперь устранена
+---
+
+## Проблема № 2: Проблема производительности запросов
+
+У нескольких сервисов в API наблюдается системная проблема с производительностью запросов. При масштабировании такая ситуация может привести к сбою базы данных. Данная задача касается прикладного уровня, а не настройки базы данных.
+
+**Требования:**
+- Проанализировать эти операции и зафиксировать точное количество SQL-запросов, выполняемых каждой из них: загрузка ленты главной страницы (10 постов), загрузка страницы профиля пользователя, загрузка страницы закладок (10 постов в закладках)
+- Выявить антипаттерн, вызывающий ненужную нагрузку на базу данных. Исправить наиболее серьезные нарушения
+- Ваш рефакторированный код должен возвращать идентичные ответы API — без регрессий
+- Задокументировать количество запросов до и после рефакторинга
+- Создать повторно используемый паттерн или утилиту, которая предотвратит повторное возникновение этой проблемы будущими разработчиками
 
 ---
 
-## Issue 3: Error Handling & Observability
+## Проблема 3: Обработка ошибок и наблюдаемость
 
-The API has inconsistent error handling and no request tracing. In production, this would make debugging impossible.
+API имеет несогласованную обработку ошибок и не поддерживает трассировку запросов. В производственной среде это сделало бы отладку невозможной.
 
-**Expectations:**
-- Audit every handler and catalogue how each handles errors (the strategies vary — identify them all)
-- Design and implement a unified error taxonomy that maps appropriately to gRPC status codes
-- Add request-level tracing: each gRPC call gets a unique trace ID that propagates through the service layer, appears in all log output, and is returned to the client
-- Add structured logging for every request with enough context to debug production issues
-- Your changes must not break existing response contracts that the client and tests depend on
-
----
-
-## Issue 4: Test Infrastructure & Coverage Gaps
-
-The test suite has structural problems and meaningful coverage gaps.
-
-**Expectations:**
-- Audit both the API unit tests and client E2E tests. Identify: untested services, untested error paths, test isolation issues, and patterns in the test helpers that encourage or discourage good testing
-- Fix any test isolation problems
+**Требования:**
+- Проведите аудит каждого обработчика и составьте каталог того, как каждый из них обрабатывает ошибки (стратегии различаются — определите их все)
+- Разработать и реализовать унифицированную таксономию ошибок, соответствующим образом сопоставленную с кодами статуса gRPC
+- Добавить отслеживание на уровне запросов: каждый вызов gRPC получает уникальный идентификатор трассировки, который распространяется через уровень сервиса, отображается во всех выводах журналов и возвращается клиенту
+- Добавить структурированное ведение журналов для каждого запроса с достаточным контекстом для отладки проблем в производственной среде
+- Ваши изменения не должны нарушать существующие контракты ответов, от которых зависят клиент и тесты
 
 ---
 
-## Task 5: Build Pipeline & Developer Experience
+## Проблема 4: Тестовая инфраструктура и пробелы в покрытии
 
-There is no CI, no pre-commit validation, and the build configuration may have gaps. We need every PR to be validated automatically — set that up here.
+Набор тестов имеет структурные проблемы и существенные пробелы в покрытии.
 
-**Expectations:**
-- A CI pipeline that validates PRs: dependencies, type checking, linting, unit tests, and builds. Steps must fail fast
-- The pipeline must leverage the monorepo's build tool correctly — only changed packages and their dependents should rebuild
-- A pre-commit hook that validates staged changes quickly enough to be practical
-- Audit the monorepo build configuration for correctness: task dependencies, cache configuration, dev task handling. Fix any issues
-- A concise developer setup guide (under 50 lines)
+**Ожидания:**
+- Проведите аудит как модульных тестов API, так и клиентских тестов E2E. Выявите: непротестированные сервисы, непротестированные пути ошибок, проблемы с изоляцией тестов, а также шаблоны в тестовых хелперах, которые способствуют или препятствуют качественному тестированию
+- Устраните все проблемы с изоляцией тестов
 
 ---
 
-## Submission
+## Задача 5: Создание конвейера сборки и улучшение пользовательского опыта разработчиков
 
-- `pnpm install && pnpm build` must succeed with zero errors
-- All pre-existing tests must pass (unit and E2E)
-- Your new tests must also pass
-- Commit your work with clear, atomic commits — one per task
-- Include any audit documents or write-ups as committed files
+В настоящее время отсутствует CI, нет проверки перед фиксацией, а в конфигурации сборки могут быть пробелы. Необходимо, чтобы каждый PR проходил автоматическую проверку — настройте это здесь.
+
+**Требования:**
+- Конвейер CI, проверяющий PR: зависимости, проверку типов, линтинг, модульные тесты и сборку. Шаги должны быстро выявлять ошибки
+- Конвейер должен правильно использовать инструмент сборки монорепозитория — пересборке должны подвергаться только измененные пакеты и их зависимости
+- Хук pre-commit, который проверяет подготовленные к фиксации изменения достаточно быстро, чтобы быть практичным
+- Проверьте конфигурацию сборки монорепозитория на правильность: зависимости задач, настройки кэша, обработку задач разработчиков. Исправьте все проблемы
+- Лаконичное руководство по настройке для разработчиков (менее 50 строк)
+
+---
+
+## Сдача работы
+
+- Команда `pnpm install && pnpm build` должна завершиться успешно без ошибок
+- Все существующие тесты должны пройти успешно (модульные и E2E)
+- Ваши новые тесты также должны пройти успешно
+- Фиксируйте результаты работы четкими, атомарными коммитами — по одному на каждую задачу
+- Включите все документы по проверке или отчёты в качестве зафиксированных файлов
